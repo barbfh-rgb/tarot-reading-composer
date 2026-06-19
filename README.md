@@ -1,2 +1,3 @@
-# tarot-reading-composer
-Tarot reading composer
+# Tarot Reading Composer
+
+A private tarot reading composer for Barbara.
