@@ -700,16 +700,10 @@
                   <textarea id="intention" name="intention"></textarea>
                 </div>
                 <div class="field wide">
-                  <label for="spreadPhoto">Photo of the physical spread</label>
+                  <label for="spreadPhoto">Your Cards</label>
                   <input id="spreadPhoto" name="spreadPhoto" type="file" accept="image/*" />
                 </div>
               </div>
-            </section>
-
-            <section class="section">
-              <h3>Cards</h3>
-              <datalist id="cardNameSuggestions"></datalist>
-              <div id="cardEditors"></div>
             </section>
 
             <section class="section">
@@ -876,7 +870,6 @@
 
       const form = document.querySelector("#readingForm");
       const statusEl = document.querySelector("#status");
-      const cardEditors = document.querySelector("#cardEditors");
       const preview = document.querySelector("#emailPreview");
 
       const fieldNames = [
@@ -960,10 +953,6 @@
       }
 
       function bindFields() {
-        document.querySelector("#cardNameSuggestions").innerHTML = cardOptions
-          .map((option) => `<option value="${escapeHtml(option.name)}"></option>`)
-          .join("");
-
         fieldNames.forEach((name) => {
           const input = form.elements[name];
           input.value = state[name] || "";
@@ -993,50 +982,6 @@
         });
       }
 
-      function renderCardEditors() {
-        cardEditors.innerHTML = state.cards
-          .map(
-            (card, index) => `
-              <div class="card-editor" data-card-index="${index}">
-                <div class="card-editor-title">
-                  <strong>${escapeHtml(card.label)}</strong>
-                  <span>${index + 1} of ${state.cards.length}</span>
-                </div>
-                <div class="field-grid">
-                  <div class="field">
-                    <label for="card-${index}-label">Position label</label>
-                    <input id="card-${index}-label" data-card-field="label" value="${escapeHtml(card.label)}" />
-                  </div>
-                  <div class="field">
-                    <label for="card-${index}-card">Card name</label>
-                    <input id="card-${index}-card" list="cardNameSuggestions" data-card-field="card" value="${escapeHtml(
-                      card.card
-                    )}" />
-                  </div>
-                  <div class="field wide">
-                    <label for="card-${index}-interpretation">Interpretation</label>
-                    <textarea id="card-${index}-interpretation" data-card-field="interpretation">${escapeHtml(
-                      card.interpretation
-                    )}</textarea>
-                  </div>
-                </div>
-              </div>
-            `
-          )
-          .join("");
-
-        cardEditors.querySelectorAll("[data-card-field]").forEach((input) => {
-          input.addEventListener("input", () => {
-            const cardBox = input.closest("[data-card-index]");
-            const index = Number(cardBox.dataset.cardIndex);
-            state.cards[index][input.dataset.cardField] = input.value;
-            saveState();
-            renderPreview();
-          });
-        });
-
-      }
-
       function renderPreview() {
         preview.innerHTML = `
           <header class="email-hero">
@@ -1054,38 +999,13 @@
           </section>
 
           <section class="email-section tint">
-            <h3>Photo of the physical spread</h3>
+            <h3>Your Cards</h3>
             <div class="spread-photo">
               ${
                 state.spreadPhotoDataUrl
-                  ? `<img src="${state.spreadPhotoDataUrl}" alt="Photo of the physical spread" />`
-                  : `<div class="spread-placeholder"><p>Photo of the physical spread</p></div>`
+                  ? `<img src="${state.spreadPhotoDataUrl}" alt="Your Cards" />`
+                  : `<div class="spread-placeholder"><p>Your Cards</p></div>`
               }
-            </div>
-          </section>
-
-          <section class="email-section tint">
-            <h3>The Cards</h3>
-            <div class="reading-cards">
-              ${state.cards
-                .map((card) => {
-                  const art = findCard(card.card);
-                  return `
-                    <article class="reading-card">
-                      <div class="tarot-card has-image" aria-label="${escapeHtml(card.card)}">
-                        <img src="${escapeHtml(art.image)}" alt="${escapeHtml(card.card)}" onerror="this.remove(); this.parentElement.classList.remove('has-image');" />
-                        <div class="tarot-symbol">${escapeHtml(art.symbol)}</div>
-                        <div class="tarot-name">${escapeHtml(card.card)}</div>
-                      </div>
-                      <div class="card-copy">
-                        <p class="kicker">${escapeHtml(card.label)}</p>
-                        <h4>${escapeHtml(card.card)}</h4>
-                        ${paragraphs(card.interpretation)}
-                      </div>
-                    </article>
-                  `;
-                })
-                .join("")}
             </div>
           </section>
 
@@ -1097,13 +1017,6 @@
       }
 
       function buildEmailText() {
-        const cardText = state.cards
-          .map(
-            (card, index) =>
-              `${index + 1}. ${card.label}: ${card.card}\n${card.interpretation}`
-          )
-          .join("\n\n");
-
         return [
           "Your Reading with Barbara",
           `For: ${state.clientName}`,
@@ -1117,9 +1030,6 @@
           "",
           "Intention",
           state.intention,
-          "",
-          "Cards",
-          cardText,
           "",
           "Barbara's thoughts",
           state.barbarasThoughts
@@ -1165,7 +1075,6 @@
       });
 
       bindFields();
-      renderCardEditors();
       renderPreview();
     </script>
   </body>
