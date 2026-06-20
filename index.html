@@ -646,8 +646,9 @@
         <div class="toolbar" aria-label="Reading actions">
           <button class="btn" type="button" data-action="copy-link">Copy link</button>
           <button class="btn" type="button" data-action="copy-text">Copy email text</button>
+          <button class="btn" type="button" data-action="email-html">Download HTML email</button>
           <button class="btn" type="button" data-action="mail">Open mail draft</button>
-          <button class="btn primary" type="button" data-action="pdf">Download PDF / Print</button>
+          <button class="btn primary" type="button" data-action="pdf">Download PDF</button>
         </div>
       </header>
 
@@ -736,6 +737,7 @@
       </div>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
       const cardImageFolder = "cards";
 
@@ -1115,6 +1117,41 @@
         ].join("\n");
       }
 
+      function downloadFile(filename, content, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function buildDesignedEmailHtml() {
+        const styles = document.querySelector("style").textContent;
+        return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your Reading with Barbara</title>
+    <style>
+      ${styles}
+      body {
+        background: #fdf7dc;
+        padding: 24px;
+      }
+      .email {
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    ${preview.outerHTML}
+  </body>
+</html>`;
+      }
+
       async function copyText(text) {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(text);
@@ -1141,6 +1178,11 @@
         setStatus("Email text copied");
       });
 
+      document.querySelector('[data-action="email-html"]').addEventListener("click", () => {
+        downloadFile("your-reading-with-barbara-email.html", buildDesignedEmailHtml(), "text/html");
+        setStatus("Designed email downloaded");
+      });
+
       document.querySelector('[data-action="mail"]').addEventListener("click", () => {
         const subject = encodeURIComponent("Your Reading with Barbara");
         const body = encodeURIComponent(buildEmailText());
@@ -1149,8 +1191,24 @@
       });
 
       document.querySelector('[data-action="pdf"]').addEventListener("click", () => {
-        setStatus("Choose Save as PDF in the print window");
-        window.print();
+        if (!window.html2pdf) {
+          setStatus("PDF tool is still loading");
+          return;
+        }
+
+        setStatus("Creating PDF...");
+        window.html2pdf()
+          .set({
+            margin: 0.35,
+            filename: "your-reading-with-barbara.pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+            pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+          })
+          .from(preview)
+          .save()
+          .then(() => setStatus("PDF downloaded"));
       });
 
       bindFields();
