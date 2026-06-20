@@ -708,7 +708,7 @@
             </section>
 
             <section class="section">
-              <h3>Card words</h3>
+              <h3>What the Cards Are Saying</h3>
               <datalist id="cardNameSuggestions"></datalist>
               <div id="cardEditors"></div>
             </section>
@@ -1061,7 +1061,7 @@
           </section>
 
           <section class="email-section">
-            <h3>Card words</h3>
+            <h3>What the Cards Are Saying</h3>
             <div class="reading-cards">
               ${state.cards
                 .map(
@@ -1108,7 +1108,7 @@
           "Intention",
           state.intention,
           "",
-          "Card words",
+          "What the Cards Are Saying",
           cardText,
           "",
           "Barbara's thoughts",
@@ -1292,7 +1292,7 @@
           y -= 58;
         }
 
-        heading("Card words");
+        heading("What the Cards Are Saying");
         state.cards.forEach((card, index) => {
           if (y < margin + 52) newPage();
           ops.push("0.616 0.471 0.149 rg");
