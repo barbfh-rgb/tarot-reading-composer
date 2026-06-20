@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Your reading with Barbara</title>
+    <title>Your Reading with Barbara</title>
     <style>
       :root {
         --ink: #130a12;
@@ -640,8 +640,7 @@
         <div class="brandline">
           <div class="mark" aria-hidden="true">B</div>
           <div>
-            <h1>Your reading with Barbara</h1>
-            <p class="subtle">Fill in the reading on the left. The finished version appears on the right.</p>
+            <h1>Your Reading with Barbara</h1>
           </div>
         </div>
         <div class="toolbar" aria-label="Reading actions">
@@ -1041,14 +1040,7 @@
       function renderPreview() {
         preview.innerHTML = `
           <header class="email-hero">
-            <p class="kicker">${escapeHtml(state.readerName)} Tarot Reading</p>
-            <h2>Your reading with Barbara</h2>
-            <div class="email-meta">
-              <span class="pill">For ${escapeHtml(state.clientName)}</span>
-              <span class="pill">${escapeHtml(formatDate(state.readingDate))}</span>
-              <span class="pill">${escapeHtml(state.spreadName)}</span>
-              <span class="pill">${escapeHtml(state.deckName)}</span>
-            </div>
+            <h2>Your Reading with Barbara</h2>
           </header>
 
           <section class="email-section tint">
@@ -1113,7 +1105,7 @@
           .join("\n\n");
 
         return [
-          "Your reading with Barbara",
+          "Your Reading with Barbara",
           `For: ${state.clientName}`,
           `Date: ${formatDate(state.readingDate)}`,
           `Reader: ${state.readerName}`,
@@ -1161,7 +1153,7 @@
       });
 
       document.querySelector('[data-action="mail"]').addEventListener("click", () => {
-        const subject = encodeURIComponent("Your reading with Barbara");
+        const subject = encodeURIComponent("Your Reading with Barbara");
         const body = encodeURIComponent(buildEmailText());
         const email = encodeURIComponent(state.recipientEmail || "");
         window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
