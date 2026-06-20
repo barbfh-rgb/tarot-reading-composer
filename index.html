@@ -707,6 +707,12 @@
             </section>
 
             <section class="section">
+              <h3>Card words</h3>
+              <datalist id="cardNameSuggestions"></datalist>
+              <div id="cardEditors"></div>
+            </section>
+
+            <section class="section">
               <h3>Barbara's thoughts</h3>
               <div class="field-grid">
                 <div class="field wide">
@@ -870,6 +876,7 @@
 
       const form = document.querySelector("#readingForm");
       const statusEl = document.querySelector("#status");
+      const cardEditors = document.querySelector("#cardEditors");
       const preview = document.querySelector("#emailPreview");
 
       const fieldNames = [
@@ -953,6 +960,10 @@
       }
 
       function bindFields() {
+        document.querySelector("#cardNameSuggestions").innerHTML = cardOptions
+          .map((option) => `<option value="${escapeHtml(option.name)}"></option>`)
+          .join("");
+
         fieldNames.forEach((name) => {
           const input = form.elements[name];
           input.value = state[name] || "";
@@ -979,6 +990,45 @@
             setStatus("Photo added");
           };
           reader.readAsDataURL(file);
+        });
+      }
+
+      function renderCardEditors() {
+        cardEditors.innerHTML = state.cards
+          .map(
+            (card, index) => `
+              <div class="card-editor" data-card-index="${index}">
+                <div class="card-editor-title">
+                  <strong>${escapeHtml(card.label)}</strong>
+                  <span>${index + 1} of ${state.cards.length}</span>
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="card-${index}-label">Position label</label>
+                    <input id="card-${index}-label" data-card-field="label" value="${escapeHtml(card.label)}" />
+                  </div>
+                  <div class="field">
+                    <label for="card-${index}-card">Card name</label>
+                    <input id="card-${index}-card" list="cardNameSuggestions" data-card-field="card" value="${escapeHtml(card.card)}" />
+                  </div>
+                  <div class="field wide">
+                    <label for="card-${index}-interpretation">Interpretation</label>
+                    <textarea id="card-${index}-interpretation" data-card-field="interpretation">${escapeHtml(card.interpretation)}</textarea>
+                  </div>
+                </div>
+              </div>
+            `
+          )
+          .join("");
+
+        cardEditors.querySelectorAll("[data-card-field]").forEach((input) => {
+          input.addEventListener("input", () => {
+            const cardBox = input.closest("[data-card-index]");
+            const index = Number(cardBox.dataset.cardIndex);
+            state.cards[index][input.dataset.cardField] = input.value;
+            saveState();
+            renderPreview();
+          });
         });
       }
 
@@ -1010,6 +1060,25 @@
           </section>
 
           <section class="email-section">
+            <h3>Card words</h3>
+            <div class="reading-cards">
+              ${state.cards
+                .map(
+                  (card, index) => `
+                    <article class="reading-card">
+                      <div class="card-copy">
+                        <p class="kicker">${index + 1}. ${escapeHtml(card.label)}</p>
+                        <h4>${escapeHtml(card.card)}</h4>
+                        ${paragraphs(card.interpretation)}
+                      </div>
+                    </article>
+                  `
+                )
+                .join("")}
+            </div>
+          </section>
+
+          <section class="email-section">
             <h3>Barbara's thoughts</h3>
             <div class="body-text">${paragraphs(state.barbarasThoughts)}</div>
           </section>
@@ -1017,6 +1086,13 @@
       }
 
       function buildEmailText() {
+        const cardText = state.cards
+          .map(
+            (card, index) =>
+              `${index + 1}. ${card.label}: ${card.card}\n${card.interpretation}`
+          )
+          .join("\n\n");
+
         return [
           "Your Reading with Barbara",
           `For: ${state.clientName}`,
@@ -1030,6 +1106,9 @@
           "",
           "Intention",
           state.intention,
+          "",
+          "Card words",
+          cardText,
           "",
           "Barbara's thoughts",
           state.barbarasThoughts
@@ -1075,6 +1154,7 @@
       });
 
       bindFields();
+      renderCardEditors();
       renderPreview();
     </script>
   </body>
