@@ -343,6 +343,13 @@
         line-height: 0.98;
       }
 
+      .title-divider {
+        width: min(220px, 58%);
+        height: 2px;
+        margin-top: 20px;
+        background: linear-gradient(90deg, var(--gold-deep), var(--gold), transparent);
+      }
+
       .email h3 {
         margin: 0 0 14px;
         color: var(--brown);
@@ -1037,10 +1044,11 @@
         preview.innerHTML = `
           <header class="email-hero">
             <h2>Your Reading with Barbara</h2>
+            <div class="title-divider" aria-hidden="true"></div>
           </header>
 
           <section class="email-section tint">
-            <h3>Your Question</h3>
+            <h3>Query or Question</h3>
             <div class="quote-block">${escapeHtml(state.clientQuestion)}</div>
           </section>
 
@@ -1260,7 +1268,7 @@
         text("Your Reading with Barbara", margin, 28, "F2");
         y = pageHeight - 124;
 
-        heading("Your Question");
+        heading("Query or Question");
         wrapped(state.clientQuestion, margin, 11, 15, 86);
         y -= 10;
         heading("Intention");
