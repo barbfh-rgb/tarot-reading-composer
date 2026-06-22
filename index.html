@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Your Reading with Barbara</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Gabriela&family=Nunito:wght@400;600;700;800;900&display=swap");
+
       :root {
         --ink: #130a12;
         --plum: #2a1024;
@@ -40,7 +42,7 @@
           linear-gradient(155deg, #130a12, #2a1024 54%, #38172b);
         color: var(--paper);
         font-family:
-          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          "Nunito", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         line-height: 1.5;
       }
 
@@ -99,7 +101,7 @@
       h2,
       h3,
       .serif {
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: "Gabriela", Georgia, "Times New Roman", serif;
         font-weight: 500;
         letter-spacing: 0;
       }
@@ -235,8 +237,9 @@
 
       label {
         color: rgba(253, 252, 251, 0.82);
+        font-family: "Gabriela", Georgia, "Times New Roman", serif;
         font-size: 0.78rem;
-        font-weight: 800;
+        font-weight: 500;
         letter-spacing: 0;
       }
 
@@ -339,7 +342,7 @@
       .email h2 {
         margin: 0;
         color: var(--brown);
-        font-size: clamp(2rem, 5vw, 4rem);
+        font-size: clamp(3rem, 7vw, 5.7rem);
         line-height: 0.98;
       }
 
@@ -359,7 +362,7 @@
       .email h4 {
         margin: 0;
         color: var(--brown);
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: "Gabriela", Georgia, "Times New Roman", serif;
         font-size: 1.2rem;
         font-weight: 500;
       }
@@ -396,6 +399,7 @@
 
       .body-text {
         color: rgba(61, 47, 0, 0.84);
+        font-family: "Nunito", Inter, ui-sans-serif, system-ui, sans-serif;
         font-size: 1rem;
       }
 
@@ -404,7 +408,7 @@
         background: linear-gradient(135deg, rgba(245, 214, 220, 0.42), rgba(255, 253, 247, 0.82));
         padding: 18px;
         color: var(--brown);
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: "Nunito", Inter, ui-sans-serif, system-ui, sans-serif;
         font-size: 1.25rem;
         line-height: 1.42;
       }
@@ -430,6 +434,7 @@
         display: block;
         margin-bottom: 6px;
         color: var(--rose);
+        font-family: "Gabriela", Georgia, "Times New Roman", serif;
         font-size: 0.78rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -512,7 +517,7 @@
       }
 
       .tarot-symbol {
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: "Gabriela", Georgia, "Times New Roman", serif;
         font-size: 2.6rem;
         line-height: 1;
       }
@@ -1041,24 +1046,27 @@
       }
 
       function renderPreview() {
+        const titleStyle = "font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: clamp(3rem, 7vw, 5.7rem);";
+        const headingStyle = "font-family: Gabriela, Georgia, 'Times New Roman', serif;";
+        const bodyStyle = "font-family: Nunito, Inter, Arial, sans-serif;";
         preview.innerHTML = `
           <header class="email-hero">
-            <h2>Your Reading with Barbara</h2>
+            <h2 style="${titleStyle}">Your Reading with Barbara</h2>
             <div class="title-divider" style="width: min(220px, 58%); height: 2px; margin-top: 20px; background: linear-gradient(90deg, #8a6a16, #d9bb67, transparent);" aria-hidden="true"></div>
           </header>
 
           <section class="email-section tint">
-            <h3>Query or Question</h3>
-            <div class="quote-block">${escapeHtml(state.clientQuestion)}</div>
+            <h3 style="${headingStyle}">Query or Question</h3>
+            <div class="quote-block" style="${bodyStyle}">${escapeHtml(state.clientQuestion)}</div>
           </section>
 
           <section class="email-section">
-            <h3>Intention</h3>
-            <div class="body-text">${paragraphs(state.intention)}</div>
+            <h3 style="${headingStyle}">Intention</h3>
+            <div class="body-text" style="${bodyStyle}">${paragraphs(state.intention)}</div>
           </section>
 
           <section class="email-section tint">
-            <h3>Your Cards</h3>
+            <h3 style="${headingStyle}">Your Cards</h3>
             <div class="spread-photo">
               ${
                 state.spreadPhotoDataUrl
@@ -1069,15 +1077,15 @@
           </section>
 
           <section class="email-section">
-            <h3>What the Cards Are Saying</h3>
+            <h3 style="${headingStyle}">What the Cards Are Saying</h3>
             <div class="reading-cards">
               ${state.cards
                 .map(
                   (card, index) => `
                     <article class="reading-card">
-                      <div class="card-copy">
-                        <p class="kicker">${index + 1}. ${escapeHtml(card.label)}</p>
-                        <h4>${escapeHtml(card.card)}</h4>
+                      <div class="card-copy" style="${bodyStyle}">
+                        <p class="kicker" style="${headingStyle}">${index + 1}. ${escapeHtml(card.label)}</p>
+                        <h4 style="${headingStyle}">${escapeHtml(card.card)}</h4>
                         ${paragraphs(card.interpretation)}
                       </div>
                     </article>
@@ -1088,8 +1096,8 @@
           </section>
 
           <section class="email-section">
-            <h3>Barbara's thoughts</h3>
-            <div class="body-text">${paragraphs(state.barbarasThoughts)}</div>
+            <h3 style="${headingStyle}">Barbara's thoughts</h3>
+            <div class="body-text" style="${bodyStyle}">${paragraphs(state.barbarasThoughts)}</div>
           </section>
         `;
       }
