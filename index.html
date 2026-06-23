@@ -1252,6 +1252,12 @@
         return bytes;
       }
 
+      async function jpegBytesFromUrl(url) {
+        const response = await fetch(url, { cache: "force-cache" });
+        const buffer = await response.arrayBuffer();
+        return new Uint8Array(buffer);
+      }
+
       async function imageSize(dataUrl) {
         return new Promise((resolve) => {
           if (!dataUrl) return resolve(null);
@@ -1276,6 +1282,9 @@
         const pageHeight = 842;
         const margin = 52;
         const contentWidth = pageWidth - margin * 2;
+        const headerImageUrl = "https://barbfh-rgb.github.io/tarot-reading-composer/pentagram-header.jpg";
+        const headerImageBytes = await jpegBytesFromUrl(headerImageUrl);
+        const headerImageSize = await imageSize(headerImageUrl);
         const pages = [];
         let ops = [];
         let y = 0;
@@ -1304,10 +1313,19 @@
         };
 
         newPage();
-        ops.push("0.227 0.133 0.094 rg", `0 ${pageHeight - 92} ${pageWidth} 92 re f`, "1 0.98 0.973 rg");
-        y = pageHeight - 54;
-        text("Your Reading with Barbara", margin, 28, "F2");
-        y = pageHeight - 124;
+        ops.push("1 0.98 0.973 rg", `0 ${pageHeight - 190} ${pageWidth} 190 re f`);
+        if (headerImageBytes && headerImageSize) {
+          const emblemSize = 82;
+          const emblemX = (pageWidth - emblemSize) / 2;
+          const emblemY = pageHeight - 118;
+          ops.push("q", `${emblemSize} 0 0 ${emblemSize} ${emblemX} ${emblemY} cm`, "/ImHeader Do", "Q");
+          ops.push("0.616 0.471 0.149 RG", `${emblemX - 4} ${emblemY - 4} ${emblemSize + 8} ${emblemSize + 8} re S`);
+        }
+        y = pageHeight - 154;
+        ops.push("0.227 0.133 0.094 rg");
+        text("Your Reading with Barbara", 128, 30, "F2");
+        ops.push("0.616 0.471 0.149 RG", `188 ${pageHeight - 176} m 408 ${pageHeight - 176} l S`);
+        y = pageHeight - 220;
 
         heading("Query or Question");
         wrapped(state.clientQuestion, margin, 11, 15, 86);
@@ -1319,7 +1337,8 @@
         heading("Your Cards");
         const jpegBytes = jpegBytesFromDataUrl(state.spreadPhotoDataUrl);
         const size = await imageSize(state.spreadPhotoDataUrl);
-        let imageObjectNumber = null;
+        let spreadImageObjectNumber = null;
+        let headerImageObjectNumber = null;
         let imageMeta = null;
         if (jpegBytes && size) {
           imageMeta = { bytes: jpegBytes, width: size.width, height: size.height };
@@ -1365,13 +1384,20 @@
         const pagesNumber = addObject("PAGES_PLACEHOLDER");
         const font1Number = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
         const font2Number = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
+        if (headerImageBytes && headerImageSize) {
+          headerImageObjectNumber = addObject(`<< /Type /XObject /Subtype /Image /Width ${headerImageSize.width} /Height ${headerImageSize.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${headerImageBytes.length} >>\nstream\n${bytesToBinary(headerImageBytes)}\nendstream`);
+        }
         if (imageMeta) {
-          imageObjectNumber = addObject(`<< /Type /XObject /Subtype /Image /Width ${imageMeta.width} /Height ${imageMeta.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageMeta.bytes.length} >>\nstream\n${bytesToBinary(imageMeta.bytes)}\nendstream`);
+          spreadImageObjectNumber = addObject(`<< /Type /XObject /Subtype /Image /Width ${imageMeta.width} /Height ${imageMeta.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageMeta.bytes.length} >>\nstream\n${bytesToBinary(imageMeta.bytes)}\nendstream`);
         }
         const pageNumbers = [];
         pages.forEach((pageOps) => {
           const contentNumber = addObject(`<< /Length ${pageOps.length} >>\nstream\n${pageOps}\nendstream`);
-          const xObject = imageObjectNumber ? `/XObject << /Im1 ${imageObjectNumber} 0 R >>` : "";
+          const xObjects = [
+            headerImageObjectNumber ? `/ImHeader ${headerImageObjectNumber} 0 R` : "",
+            spreadImageObjectNumber ? `/Im1 ${spreadImageObjectNumber} 0 R` : ""
+          ].filter(Boolean).join(" ");
+          const xObject = xObjects ? `/XObject << ${xObjects} >>` : "";
           const pageNumber = addObject(`<< /Type /Page /Parent ${pagesNumber} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${font1Number} 0 R /F2 ${font2Number} 0 R >> ${xObject} >> /Contents ${contentNumber} 0 R >>`);
           pageNumbers.push(pageNumber);
         });
