@@ -1156,28 +1156,45 @@
       }
 
       function buildDesignedEmailHtml() {
-        const styles = document.querySelector("style").textContent;
-        return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Your Reading with Barbara</title>
-    <style>
-      ${styles}
-      body {
-        background: #fdf7dc;
-        padding: 24px;
+        const clone = preview.cloneNode(true);
+        inlineEmailStyles(preview, clone);
+        return clone.outerHTML;
       }
-      .email {
-        margin: 0 auto;
-      }
-    </style>
-  </head>
-  <body>
-    ${preview.outerHTML}
-  </body>
-</html>`;
+
+      function inlineEmailStyles(source, target) {
+        const computed = window.getComputedStyle(source);
+        const properties = [
+          "background",
+          "backgroundColor",
+          "backgroundImage",
+          "backgroundSize",
+          "border",
+          "borderRadius",
+          "boxShadow",
+          "color",
+          "display",
+          "fontFamily",
+          "fontSize",
+          "fontWeight",
+          "height",
+          "lineHeight",
+          "margin",
+          "maxHeight",
+          "maxWidth",
+          "objectFit",
+          "overflow",
+          "padding",
+          "textAlign",
+          "width"
+        ];
+
+        properties.forEach((property) => {
+          target.style[property] = computed[property];
+        });
+
+        Array.from(source.children).forEach((child, index) => {
+          inlineEmailStyles(child, target.children[index]);
+        });
       }
 
       async function copyDesignedEmail() {
