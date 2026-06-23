@@ -328,6 +328,17 @@
           linear-gradient(rgba(168, 77, 101, 0.07) 1px, transparent 1px),
           linear-gradient(135deg, #fff7f4, var(--paper) 48%, var(--champagne));
         background-size: 100% 34px;
+        text-align: center;
+      }
+
+      .header-emblem {
+        display: block;
+        width: clamp(104px, 18vw, 156px);
+        height: auto;
+        margin: 0 auto 18px;
+        border: 1px solid rgba(191, 155, 48, 0.44);
+        border-radius: 50%;
+        box-shadow: 0 16px 38px rgba(61, 47, 0, 0.18);
       }
 
       .kicker {
@@ -349,7 +360,7 @@
       .title-divider {
         width: min(220px, 58%);
         height: 2px;
-        margin-top: 20px;
+        margin: 20px auto 0;
         background: linear-gradient(90deg, var(--gold-deep), var(--gold), transparent);
       }
 
@@ -1046,13 +1057,15 @@
       }
 
       function renderPreview() {
-        const titleStyle = "font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: clamp(3rem, 7vw, 5.7rem);";
+        const headerImageSrc = "https://barbfh-rgb.github.io/tarot-reading-composer/pentagram-header.png";
+        const titleStyle = "font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: clamp(3rem, 7vw, 5.7rem); text-align: center;";
         const headingStyle = "font-family: Gabriela, Georgia, 'Times New Roman', serif;";
         const bodyStyle = "font-family: Nunito, Inter, Arial, sans-serif;";
         preview.innerHTML = `
-          <header class="email-hero">
+          <header class="email-hero" style="text-align: center;">
+            <img class="header-emblem" src="${headerImageSrc}" alt="" style="display: block; width: clamp(104px, 18vw, 156px); height: auto; margin: 0 auto 18px; border: 1px solid rgba(191, 155, 48, 0.44); border-radius: 50%; box-shadow: 0 16px 38px rgba(61, 47, 0, 0.18);" />
             <h2 style="${titleStyle}">Your Reading with Barbara</h2>
-            <div class="title-divider" style="width: min(220px, 58%); height: 2px; margin-top: 20px; background: linear-gradient(90deg, #8a6a16, #d9bb67, transparent);" aria-hidden="true"></div>
+            <div class="title-divider" style="width: min(220px, 58%); height: 2px; margin: 20px auto 0; background: linear-gradient(90deg, #8a6a16, #d9bb67, transparent);" aria-hidden="true"></div>
           </header>
 
           <section class="email-section tint">
