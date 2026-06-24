@@ -1233,11 +1233,61 @@
       }
 
       function pdfEscape(value) {
-        return String(value || "")
+        return normalizePdfText(value)
           .replace(/\\/g, "\\\\")
           .replace(/\(/g, "\\(")
           .replace(/\)/g, "\\)")
           .replace(/[\r\n]+/g, " ");
+      }
+
+      function normalizePdfText(value) {
+        return String(value || "")
+          .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+          .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+          .replace(/[\u2013\u2014]/g, "-")
+          .replace(/\u2026/g, "...")
+          .replace(/\u00A0/g, " ")
+          .replace(/([.!?])(?=[A-Z])/g, "$1 ")
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ");
+      }
+
+      function pdfParagraphs(value) {
+        const chunks = normalizePdfText(value || " ")
+          .split(/\n{2,}/)
+          .map((paragraph) => paragraph.trim())
+          .filter(Boolean);
+        const paragraphs = [];
+        chunks.forEach((paragraph) => {
+          if (paragraph.length < 560) {
+            paragraphs.push(paragraph);
+            return;
+          }
+          const sentences = [];
+          let start = 0;
+          for (let index = 0; index < paragraph.length; index += 1) {
+            const char = paragraph[index];
+            const next = paragraph[index + 1] || "";
+            if ((char === "." || char === "!" || char === "?") && /\s/.test(next)) {
+              sentences.push(paragraph.slice(start, index + 1).trim());
+              start = index + 1;
+            }
+          }
+          const tail = paragraph.slice(start).trim();
+          if (tail) sentences.push(tail);
+
+          let group = "";
+          sentences.forEach((sentence) => {
+            const next = group ? `${group} ${sentence}` : sentence;
+            if (next.length > 520 && group) {
+              paragraphs.push(group);
+              group = sentence;
+            } else {
+              group = next;
+            }
+          });
+          if (group) paragraphs.push(group);
+        });
+        return paragraphs.length ? paragraphs : [" "];
       }
 
       function wrapPdfText(text, maxChars) {
@@ -1346,7 +1396,7 @@
           return String(value || "").length * size * factor;
         };
         const wrapLines = (value, size, maxWidth, font = "F1") => {
-          const paragraphsToWrap = String(value || " ").split(/\n{2,}/);
+          const paragraphsToWrap = pdfParagraphs(value || " ");
           const lines = [];
           paragraphsToWrap.forEach((paragraph, paragraphIndex) => {
             const words = paragraph.replace(/\n/g, " ").split(/\s+/).filter(Boolean);
@@ -1463,9 +1513,11 @@
           y = drawY - 26;
         }
 
-        if (y < pageHeight - 300) newPage();
-        heading("What the Cards Are Saying");
         state.cards.forEach((card, index) => {
+          newPage();
+          if (index === 0) {
+            heading("What the Cards Are Saying");
+          }
           const cardTitle = `${index + 1}. ${card.label}: ${card.card}`;
           const titleLines = wrapLines(cardTitle, 13, contentWidth - 36, "F1");
           const bodyLines = wrapLines(card.interpretation, 11.2, contentWidth - 36, "F1");
