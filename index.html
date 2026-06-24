@@ -1156,45 +1156,58 @@
       }
 
       function buildDesignedEmailHtml() {
-        const clone = preview.cloneNode(true);
-        inlineEmailStyles(preview, clone);
-        return clone.outerHTML;
-      }
+        const headerImageSrc = "https://barbfh-rgb.github.io/tarot-reading-composer/pentagram-header.png";
+        const sectionStyle = "padding: 30px 38px; border-top: 1px solid rgba(61, 47, 0, 0.10);";
+        const headingStyle = "margin: 0 0 14px; color: #3a2218; font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: 26px; line-height: 1.18; font-weight: 500;";
+        const bodyStyle = "color: rgba(61, 47, 0, 0.86); font-family: Nunito, Arial, sans-serif; font-size: 16px; line-height: 1.62; margin: 0;";
+        const paragraphHtml = (value) =>
+          paragraphs(value).replace(/<p>/g, `<p style="${bodyStyle} margin: 0 0 12px;">`);
+        const spreadHtml = state.spreadPhotoDataUrl
+          ? `<img src="${state.spreadPhotoDataUrl}" alt="Your Cards" style="display: block; width: 100%; max-width: 680px; height: auto; border: 1px solid rgba(191, 155, 48, 0.38); border-radius: 8px; margin: 0 auto;" />`
+          : `<div style="min-height: 90px; border: 1px dashed rgba(191, 155, 48, 0.52); border-radius: 8px; background: #fffdf7; color: rgba(61, 47, 0, 0.62); font-family: Nunito, Arial, sans-serif; font-size: 16px; line-height: 90px; text-align: center;">Your Cards</div>`;
+        const cardHtml = state.cards
+          .map(
+            (card, index) => `
+              <div style="display: block; width: auto; margin: 0 0 18px; padding: 18px; border: 1px solid rgba(61, 47, 0, 0.10); border-radius: 8px; background: linear-gradient(145deg, rgba(255, 250, 248, 0.96), rgba(255, 240, 233, 0.72));">
+                <p style="margin: 0 0 8px; color: #9d7826; font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: 15px; line-height: 1.3;">${index + 1}. ${escapeHtml(card.label)}</p>
+                <h4 style="margin: 0 0 10px; color: #3a2218; font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: 21px; line-height: 1.22; font-weight: 500;">${escapeHtml(card.card)}</h4>
+                ${paragraphHtml(card.interpretation)}
+              </div>
+            `
+          )
+          .join("");
 
-      function inlineEmailStyles(source, target) {
-        const computed = window.getComputedStyle(source);
-        const properties = [
-          "background",
-          "backgroundColor",
-          "backgroundImage",
-          "backgroundSize",
-          "border",
-          "borderRadius",
-          "boxShadow",
-          "color",
-          "display",
-          "fontFamily",
-          "fontSize",
-          "fontWeight",
-          "height",
-          "lineHeight",
-          "margin",
-          "maxHeight",
-          "maxWidth",
-          "objectFit",
-          "overflow",
-          "padding",
-          "textAlign",
-          "width"
-        ];
-
-        properties.forEach((property) => {
-          target.style[property] = computed[property];
-        });
-
-        Array.from(source.children).forEach((child, index) => {
-          inlineEmailStyles(child, target.children[index]);
-        });
+        return `
+          <div style="width: 100%; margin: 0; padding: 0; background: #fffaf8;">
+            <div style="width: 100%; max-width: 760px; margin: 0 auto; overflow: hidden; border: 1px solid rgba(61, 47, 0, 0.12); border-radius: 8px; background: #fffaf8; color: #3a2218;">
+              <div style="padding: 38px 38px 34px; text-align: center; background: linear-gradient(135deg, #fff7f4, #fffaf8 48%, #f2dfb2);">
+                <img src="${headerImageSrc}" alt="" width="132" height="132" style="display: block; width: 132px; height: 132px; object-fit: cover; margin: 0 auto 18px; border: 1px solid rgba(191, 155, 48, 0.44); border-radius: 50%;" />
+                <h1 style="margin: 0; color: #3a2218; font-family: Gabriela, Georgia, 'Times New Roman', serif; font-size: 50px; line-height: 1.02; font-weight: 500; text-align: center;">Your Reading with Barbara</h1>
+                <div style="width: 220px; max-width: 58%; height: 2px; margin: 20px auto 0; background: #9d7826;"></div>
+              </div>
+              <div style="${sectionStyle} background: #fffdf3;">
+                <h2 style="${headingStyle}">Query or Question</h2>
+                <div style="border-left: 4px solid #d6b769; background: #fff7f4; padding: 18px; color: #3a2218; font-family: Nunito, Arial, sans-serif; font-size: 18px; line-height: 1.55;">${escapeHtml(state.clientQuestion).replace(/\n/g, "<br>")}</div>
+              </div>
+              <div style="${sectionStyle}">
+                <h2 style="${headingStyle}">Intention</h2>
+                ${paragraphHtml(state.intention)}
+              </div>
+              <div style="${sectionStyle} background: #fffdf3;">
+                <h2 style="${headingStyle}">Your Cards</h2>
+                ${spreadHtml}
+              </div>
+              <div style="${sectionStyle}">
+                <h2 style="${headingStyle}">What the Cards Are Saying</h2>
+                ${cardHtml}
+              </div>
+              <div style="${sectionStyle}">
+                <h2 style="${headingStyle}">Barbara's thoughts</h2>
+                ${paragraphHtml(state.barbarasThoughts)}
+              </div>
+            </div>
+          </div>
+        `;
       }
 
       async function copyDesignedEmail() {
@@ -1268,6 +1281,27 @@
         });
       }
 
+      async function imageToJpegDataUrl(dataUrl) {
+        if (!dataUrl || dataUrl.startsWith("data:image/jpeg")) return dataUrl;
+        const size = await imageSize(dataUrl);
+        if (!size) return "";
+        return new Promise((resolve) => {
+          const image = new Image();
+          image.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = size.width;
+            canvas.height = size.height;
+            const context = canvas.getContext("2d");
+            context.fillStyle = "#fffaf8";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(image, 0, 0);
+            resolve(canvas.toDataURL("image/jpeg", 0.9));
+          };
+          image.onerror = () => resolve("");
+          image.src = dataUrl;
+        });
+      }
+
       function bytesToBinary(bytes) {
         let output = "";
         const chunk = 8192;
@@ -1280,99 +1314,135 @@
       async function makePdfBlob() {
         const pageWidth = 595;
         const pageHeight = 842;
-        const margin = 52;
+        const margin = 54;
         const contentWidth = pageWidth - margin * 2;
         const headerImageUrl = "https://barbfh-rgb.github.io/tarot-reading-composer/pentagram-header.jpg";
         const headerImageBytes = await jpegBytesFromUrl(headerImageUrl);
         const headerImageSize = await imageSize(headerImageUrl);
+        const spreadPhotoJpeg = await imageToJpegDataUrl(state.spreadPhotoDataUrl);
+        const spreadPhotoBytes = jpegBytesFromDataUrl(spreadPhotoJpeg);
+        const spreadPhotoSize = await imageSize(spreadPhotoJpeg);
         const pages = [];
         let ops = [];
         let y = 0;
 
         const newPage = () => {
           if (ops.length) pages.push(ops.join("\n"));
-          ops = ["0.992 0.969 0.863 rg", `0 0 ${pageWidth} ${pageHeight} re f`, "0.839 0.718 0.412 RG", `28 28 ${pageWidth - 56} ${pageHeight - 56} re S`];
+          ops = [
+            "1 0.98 0.973 rg",
+            `0 0 ${pageWidth} ${pageHeight} re f`,
+            "0.984 0.949 0.863 rg",
+            `34 34 ${pageWidth - 68} ${pageHeight - 68} re f`,
+            "0.839 0.718 0.412 RG",
+            `34 34 ${pageWidth - 68} ${pageHeight - 68} re S`
+          ];
           y = pageHeight - margin;
         };
         const text = (value, x, size, font = "F1") => {
           ops.push(`BT /${font} ${size} Tf ${x} ${y} Td (${pdfEscape(value)}) Tj ET`);
         };
-        const wrapped = (value, x, size, lineHeight, maxChars, font = "F1") => {
-          wrapPdfText(value, maxChars).forEach((line) => {
-            if (y < margin + 32) newPage();
+        const textWidth = (value, size, font = "F1") => {
+          const factor = font === "F2" ? 0.5 : 0.48;
+          return String(value || "").length * size * factor;
+        };
+        const wrapLines = (value, size, maxWidth, font = "F1") => {
+          const paragraphsToWrap = String(value || " ").split(/\n{2,}/);
+          const lines = [];
+          paragraphsToWrap.forEach((paragraph, paragraphIndex) => {
+            const words = paragraph.replace(/\n/g, " ").split(/\s+/).filter(Boolean);
+            let line = "";
+            words.forEach((word) => {
+              const next = line ? `${line} ${word}` : word;
+              if (textWidth(next, size, font) > maxWidth && line) {
+                lines.push(line);
+                line = word;
+              } else {
+                line = next;
+              }
+            });
+            if (line) lines.push(line);
+            if (paragraphIndex < paragraphsToWrap.length - 1) lines.push("");
+          });
+          return lines.length ? lines : [" "];
+        };
+        const ensureSpace = (height) => {
+          if (y - height < margin + 8) newPage();
+        };
+        const wrapped = (value, x, size, lineHeight, maxWidth, font = "F1", after = 8) => {
+          wrapLines(value, size, maxWidth, font).forEach((line) => {
+            ensureSpace(line ? lineHeight + 2 : lineHeight);
             text(line, x, size, font);
             y -= lineHeight;
           });
+          y -= after;
         };
         const heading = (value) => {
-          if (y < margin + 44) newPage();
+          ensureSpace(42);
           ops.push("0.227 0.133 0.094 rg");
-          text(value, margin, 18, "F2");
+          text(value, margin, 20, "F2");
+          y -= 12;
+          ops.push("0.616 0.471 0.149 RG", `${margin} ${y} m ${margin + 120} ${y} l S`);
+          y -= 24;
+        };
+        const section = (title, value) => {
+          heading(title);
           ops.push("0.227 0.133 0.094 rg");
-          y -= 22;
+          wrapped(value, margin, 11.5, 16, contentWidth, "F1", 14);
+        };
+        const drawHeader = () => {
+          ops.push("1 0.98 0.973 rg", `0 ${pageHeight - 210} ${pageWidth} 210 re f`);
+          if (headerImageBytes && headerImageSize) {
+            const emblemSize = 78;
+            const emblemX = (pageWidth - emblemSize) / 2;
+            const emblemY = pageHeight - 118;
+            ops.push("q", `${emblemSize} 0 0 ${emblemSize} ${emblemX} ${emblemY} cm`, "/ImHeader Do", "Q");
+            ops.push("0.616 0.471 0.149 RG", `${emblemX - 4} ${emblemY - 4} ${emblemSize + 8} ${emblemSize + 8} re S`);
+          }
+          y = pageHeight - 156;
+          ops.push("0.227 0.133 0.094 rg");
+          const title = "Your Reading with Barbara";
+          text(title, (pageWidth - textWidth(title, 32, "F2")) / 2, 32, "F2");
+          ops.push("0.616 0.471 0.149 RG", `188 ${pageHeight - 180} m 408 ${pageHeight - 180} l S`);
+          y = pageHeight - 230;
         };
 
         newPage();
-        ops.push("1 0.98 0.973 rg", `0 ${pageHeight - 190} ${pageWidth} 190 re f`);
-        if (headerImageBytes && headerImageSize) {
-          const emblemSize = 82;
-          const emblemX = (pageWidth - emblemSize) / 2;
-          const emblemY = pageHeight - 118;
-          ops.push("q", `${emblemSize} 0 0 ${emblemSize} ${emblemX} ${emblemY} cm`, "/ImHeader Do", "Q");
-          ops.push("0.616 0.471 0.149 RG", `${emblemX - 4} ${emblemY - 4} ${emblemSize + 8} ${emblemSize + 8} re S`);
-        }
-        y = pageHeight - 154;
-        ops.push("0.227 0.133 0.094 rg");
-        text("Your Reading with Barbara", 128, 30, "F2");
-        ops.push("0.616 0.471 0.149 RG", `188 ${pageHeight - 176} m 408 ${pageHeight - 176} l S`);
-        y = pageHeight - 220;
-
-        heading("Query or Question");
-        wrapped(state.clientQuestion, margin, 11, 15, 86);
-        y -= 10;
-        heading("Intention");
-        wrapped(state.intention, margin, 11, 15, 86);
-        y -= 12;
+        drawHeader();
+        section("Query or Question", state.clientQuestion);
+        section("Intention", state.intention);
 
         heading("Your Cards");
-        const jpegBytes = jpegBytesFromDataUrl(state.spreadPhotoDataUrl);
-        const size = await imageSize(state.spreadPhotoDataUrl);
         let spreadImageObjectNumber = null;
         let headerImageObjectNumber = null;
         let imageMeta = null;
-        if (jpegBytes && size) {
-          imageMeta = { bytes: jpegBytes, width: size.width, height: size.height };
+        if (spreadPhotoBytes && spreadPhotoSize) {
+          imageMeta = { bytes: spreadPhotoBytes, width: spreadPhotoSize.width, height: spreadPhotoSize.height };
           const boxW = contentWidth;
-          const boxH = 190;
-          if (y - boxH < margin) newPage();
-          const ratio = Math.min(boxW / size.width, boxH / size.height);
-          const drawW = size.width * ratio;
-          const drawH = size.height * ratio;
+          const boxH = 260;
+          ensureSpace(boxH + 20);
+          const ratio = Math.min(boxW / spreadPhotoSize.width, boxH / spreadPhotoSize.height);
+          const drawW = spreadPhotoSize.width * ratio;
+          const drawH = spreadPhotoSize.height * ratio;
           const drawX = margin + (boxW - drawW) / 2;
           const drawY = y - drawH;
+          ops.push("1 0.992 0.969 rg", `${margin - 8} ${drawY - 8} ${contentWidth + 16} ${drawH + 16} re f`);
+          ops.push("0.839 0.718 0.412 RG", `${drawX - 1} ${drawY - 1} ${drawW + 2} ${drawH + 2} re S`);
           ops.push("q", `${drawW} 0 0 ${drawH} ${drawX} ${drawY} cm`, "/Im1 Do", "Q");
-          y -= boxH + 16;
+          y = drawY - 26;
         } else {
-          if (y - 88 < margin) newPage();
-          ops.push("1 0.992 0.969 rg", `${margin} ${y - 80} ${contentWidth} 80 re f`);
-          y -= 42;
-          text("Your Cards", 260, 14, "F2");
-          y -= 58;
+          wrapped("Your Cards", margin, 11, 15, contentWidth, "F1", 14);
         }
 
         heading("What the Cards Are Saying");
         state.cards.forEach((card, index) => {
-          if (y < margin + 52) newPage();
+          ensureSpace(70);
           ops.push("0.616 0.471 0.149 rg");
-          text(`${index + 1}. ${card.label}: ${card.card}`, margin, 12, "F1");
-          y -= 17;
+          wrapped(`${index + 1}. ${card.label}: ${card.card}`, margin, 12, 16, contentWidth, "F1", 2);
           ops.push("0.227 0.133 0.094 rg");
-          wrapped(card.interpretation, margin, 10, 14, 90);
-          y -= 9;
+          wrapped(card.interpretation, margin, 10.8, 15, contentWidth, "F1", 12);
         });
 
-        heading("Barbara's thoughts");
-        wrapped(state.barbarasThoughts, margin, 11, 15, 86);
+        section("Barbara's thoughts", state.barbarasThoughts);
         pages.push(ops.join("\n"));
 
         const objects = [];
