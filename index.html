@@ -1376,18 +1376,49 @@
           });
           y -= after;
         };
+        const drawLine = (x, lineY, width = 120) => {
+          ops.push("0.616 0.471 0.149 RG", `${x} ${lineY} m ${x + width} ${lineY} l S`);
+        };
         const heading = (value) => {
           ensureSpace(42);
           ops.push("0.227 0.133 0.094 rg");
           text(value, margin, 20, "F2");
           y -= 12;
-          ops.push("0.616 0.471 0.149 RG", `${margin} ${y} m ${margin + 120} ${y} l S`);
+          drawLine(margin, y);
           y -= 24;
         };
-        const section = (title, value) => {
-          heading(title);
+        const framedSection = (title, value, options = {}) => {
+          const x = margin;
+          const width = contentWidth;
+          const titleSize = options.titleSize || 20;
+          const bodySize = options.bodySize || 11.7;
+          const lineHeight = options.lineHeight || 18;
+          const titleLines = wrapLines(title, titleSize, width - 38, "F2");
+          const bodyLines = wrapLines(value, bodySize, width - 38, "F1");
+          const boxHeight = 42 + titleLines.length * 24 + bodyLines.length * lineHeight + 22;
+          ensureSpace(Math.min(boxHeight, pageHeight - margin * 2));
+          if (boxHeight > pageHeight - margin * 2) {
+            heading(title);
+            ops.push("0.227 0.133 0.094 rg");
+            wrapped(value, margin, bodySize, lineHeight, contentWidth, "F1", 20);
+            return;
+          }
+          ops.push("1 0.992 0.969 rg", `${x} ${y - boxHeight} ${width} ${boxHeight} re f`);
+          ops.push("0.839 0.718 0.412 RG", `${x} ${y - boxHeight} ${width} ${boxHeight} re S`);
+          y -= 24;
           ops.push("0.227 0.133 0.094 rg");
-          wrapped(value, margin, 11.5, 16, contentWidth, "F1", 14);
+          titleLines.forEach((line) => {
+            text(line, x + 18, titleSize, "F2");
+            y -= 24;
+          });
+          drawLine(x + 18, y + 8, 130);
+          y -= 14;
+          ops.push("0.227 0.133 0.094 rg");
+          bodyLines.forEach((line) => {
+            text(line, x + 18, bodySize, "F1");
+            y -= lineHeight;
+          });
+          y -= 42;
         };
         const drawHeader = () => {
           ops.push("1 0.98 0.973 rg", `0 ${pageHeight - 210} ${pageWidth} 210 re f`);
@@ -1408,14 +1439,15 @@
 
         newPage();
         drawHeader();
-        section("Query or Question", state.clientQuestion);
-        section("Intention", state.intention);
+        framedSection("Query or Question", state.clientQuestion);
+        framedSection("Intention", state.intention);
 
-        heading("Your Cards");
         let spreadImageObjectNumber = null;
         let headerImageObjectNumber = null;
         let imageMeta = null;
         if (spreadPhotoBytes && spreadPhotoSize) {
+          if (y < pageHeight - 300) newPage();
+          heading("Your Cards");
           imageMeta = { bytes: spreadPhotoBytes, width: spreadPhotoSize.width, height: spreadPhotoSize.height };
           const boxW = contentWidth;
           const boxH = 260;
@@ -1429,20 +1461,44 @@
           ops.push("0.839 0.718 0.412 RG", `${drawX - 1} ${drawY - 1} ${drawW + 2} ${drawH + 2} re S`);
           ops.push("q", `${drawW} 0 0 ${drawH} ${drawX} ${drawY} cm`, "/Im1 Do", "Q");
           y = drawY - 26;
-        } else {
-          wrapped("Your Cards", margin, 11, 15, contentWidth, "F1", 14);
         }
 
+        if (y < pageHeight - 300) newPage();
         heading("What the Cards Are Saying");
         state.cards.forEach((card, index) => {
-          ensureSpace(70);
+          const cardTitle = `${index + 1}. ${card.label}: ${card.card}`;
+          const titleLines = wrapLines(cardTitle, 13, contentWidth - 36, "F1");
+          const bodyLines = wrapLines(card.interpretation, 11.2, contentWidth - 36, "F1");
+          const cardHeight = 38 + titleLines.length * 18 + bodyLines.length * 17 + 22;
+          ensureSpace(Math.min(cardHeight, pageHeight - margin * 2));
+          if (cardHeight <= pageHeight - margin * 2) {
+            ops.push("1 0.992 0.969 rg", `${margin} ${y - cardHeight} ${contentWidth} ${cardHeight} re f`);
+            ops.push("0.839 0.718 0.412 RG", `${margin} ${y - cardHeight} ${contentWidth} ${cardHeight} re S`);
+            y -= 24;
+            ops.push("0.616 0.471 0.149 rg");
+            titleLines.forEach((line) => {
+              text(line, margin + 18, 13, "F1");
+              y -= 18;
+            });
+            y -= 4;
+            ops.push("0.227 0.133 0.094 rg");
+            bodyLines.forEach((line) => {
+              text(line, margin + 18, 11.2, "F1");
+              y -= 17;
+            });
+            y -= 42;
+            return;
+          }
           ops.push("0.616 0.471 0.149 rg");
-          wrapped(`${index + 1}. ${card.label}: ${card.card}`, margin, 12, 16, contentWidth, "F1", 2);
+          wrapped(cardTitle, margin, 13, 18, contentWidth, "F1", 6);
           ops.push("0.227 0.133 0.094 rg");
-          wrapped(card.interpretation, margin, 10.8, 15, contentWidth, "F1", 12);
+          wrapped(card.interpretation, margin, 11.2, 17, contentWidth, "F1", 20);
         });
 
-        section("Barbara's thoughts", state.barbarasThoughts);
+        if (state.barbarasThoughts.trim()) {
+          if (y < pageHeight - 260) newPage();
+          framedSection("Barbara's thoughts", state.barbarasThoughts, { bodySize: 11.7, lineHeight: 18 });
+        }
         pages.push(ops.join("\n"));
 
         const objects = [];
